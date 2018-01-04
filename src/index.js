@@ -1,13 +1,14 @@
-import React, { Component, PropTypes } from 'react'
+import React, { Component } from 'react'
+import PropTypes from 'prop-types'
 import ReactDOM from 'react-dom'
 
 class Hello extends Component {
-  // static propTypes = {
-    // name: PropTypes.string
-  // }
+  static propTypes = {
+    name: PropTypes.string
+  }
 
   render() {
-    return <div> hello { this.props.name } </div>    
+    return <div> hello { this.props.name } </div>
   }
 }
 
