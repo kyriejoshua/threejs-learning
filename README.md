@@ -8,3 +8,6 @@ Learning to use Three.js well
 * yarn v1.3.2
 * parcel v1.4.1
 
+### Usage
+
+* `npm start`
