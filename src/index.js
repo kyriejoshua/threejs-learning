@@ -1,17 +1,16 @@
 import React, { Component } from 'react'
-import PropTypes from 'prop-types'
 import ReactDOM from 'react-dom'
+import { BrowserRouter as Router, Route } from 'react-router-dom'
+import App from './App.js'
 
-class Hello extends Component {
-  static propTypes = {
-    name: PropTypes.string
-  }
+const app = document.querySelector('#app')
 
-  render() {
-    return <div> hello { this.props.name } </div>
-  }
-}
-
-const app = document.body.querySelector('#app')
-ReactDOM.render(<Hello name='three.js'/>, app)
+ReactDOM.render(
+  <Router>
+    <div>
+      <Route exact={true} path="/" component={App}/>
+      <Route path="/home" render={() => (<h2>Welcome</h2>)}/>
+    </div>
+  </Router>
+  , app)
 
