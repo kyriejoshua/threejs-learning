@@ -19,5 +19,8 @@
     "react-dom": "^16.2.0",
     "react-router-dom": "^4.2.2",
     "three": "^0.87.1"
+  },
+  "devDependencies": {
+    "less": "^2.7.3"
   }
 }
