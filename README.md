@@ -3,10 +3,11 @@ Learning to use Three.js well
 
 ### Requirements
 
-* node v8.0.0
+* Node v8.0.0
 * React v16.2.0
-* yarn v1.3.2
-* parcel v1.4.1
+* Yarn v1.3.2
+* Parcel v1.4.1
+* Three v87.1
 
 ### Usage
 
