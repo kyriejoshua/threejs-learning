@@ -28,5 +28,4 @@ export default class Sidebar extends Component {
        </div>
       ) : (<h2>Loading</h2>)
   }
-
 }
