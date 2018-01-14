@@ -11,7 +11,7 @@ export default class Sidebar extends Component {
     return Array.isArray(this.props.links) ?
       (<div className="sidebar">
         <div className="sidebar-title">
-          <div>Threejs-learning</div>
+          <div>Threejs-Learning</div>
           <div className="sidebar-title-name">by KyrieJoshua(zzy)</div>
         </div>
         <div className="sidebar-content">

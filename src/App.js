@@ -7,6 +7,6 @@ export default class App extends Component {
   }
 
   render() {
-    return <h1> hello {this.props.name} </h1>
+    return (<div style={{ padding: '20px' }}><h1> hello {this.props.name} </h1></div>)
   }
 }
