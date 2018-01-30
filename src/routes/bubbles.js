@@ -53,22 +53,41 @@ export default class Bubbles extends Component {
     return bubbles
   }
 
+  rotatingBubbles(bubbles, speed, timer = 5000 /* stop time */) {
+    if (!Array.isArray(bubbles.children)) { return }
+    const self = this
+    bubbles.children.map((bubble) => {
+      if (self.shouldStop) { return }
+      const currentDistance = Math.cos(bubble.angle) * bubble.R
+      const lastDistance = Math.cos(bubble.angle - speed) * bubble.R
+      const newPos = [Math.sin(bubble.angle) * bubble.R, 5, currentDistance]
+      bubble.angle += speed
+      bubble.angle = bubble.angle > 2 * P * bubble.R ? bubble.angle - 2 * P * bubble.R : bubble.angle
+      const nextDistance = Math.cos(bubble.angle) * bubble.R
+      // when it is closest to you
+      self.shouldStop = currentDistance > nextDistance && currentDistance > lastDistance
+      if (self.shouldStop) {
+        self.timeout = window.setTimeout(() => {
+          self.shouldStop = false
+          window.clearTimeout(self.timeout)
+        }, timer)
+      }
+      bubble.position.set(...newPos)
+    })
+  }
+
   componentDidMount() {
     const bubbles = this.initBubbles()
+    const speed = this.getSpeed()
+    this.shouldStop = false
     this.el.appendChild(this.renderer.domElement)
     this.scene.add(bubbles)
     this.camera.position.set(0, 10, 20)
-    const speed = this.getSpeed()
     this.camera.lookAt(this.scene.position)
     this.animate = () => {
       this.animation = window.requestAnimationFrame(this.animate)
       this.renderer.render(this.scene, this.camera)
-      Array.isArray(bubbles.children) && bubbles.children.map((bubble) => {
-        const newPos = [Math.sin(bubble.angle) * bubble.R, 5, Math.cos(bubble.angle) * bubble.R]
-        bubble.angle += speed
-        bubble.angle = bubble.angle > 2 * P * bubble.R ? bubble.angle - 2 * P * bubble.R : bubble.angle
-        bubble.position.set(...newPos)
-      })
+      this.rotatingBubbles(bubbles, speed)
       // bubble.rotation.x += 0.01
       // bubble.rotation.y += 0.01
     }
