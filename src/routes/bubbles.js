@@ -7,8 +7,6 @@ export default class Bubbles extends Component {
     super(props)
     this.scene = new THREE.Scene()
     this.renderer = new THREE.WebGLRenderer()
-    this.camera = new THREE.PerspectiveCamera(75, (window.innerWidth - 200) / window.innerHeight, 1, 50)
-    this.renderer.setSize( window.innerWidth - 200, window.innerHeight)
   }
 
   /**
@@ -81,7 +79,9 @@ export default class Bubbles extends Component {
     const speed = this.getSpeed()
     this.shouldStop = false
     this.el.appendChild(this.renderer.domElement)
+    this.renderer.setSize(this.el.clientWidth, this.el.clientHeight)
     this.scene.add(bubbles)
+    this.camera = new THREE.PerspectiveCamera(75, this.el.clientWidth / this.el.clientHeight, 1, 50)
     this.camera.position.set(0, 10, 20)
     this.camera.lookAt(this.scene.position)
     this.animate = () => {
@@ -95,7 +95,7 @@ export default class Bubbles extends Component {
   }
 
   render() {
-    return (<div ref={(el) => this.el = el }/>)
+    return (<div className="content-wrapper" ref={(el) => this.el = el }/>)
   }
 
   componentWillUnount() {
