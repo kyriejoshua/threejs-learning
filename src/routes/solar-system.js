@@ -11,52 +11,52 @@ const planets = {
     color: 0xfef778
   },
   Mercury: {
-    size: [0.2, 10, 10],
+    size: [0.4, 10, 10],
     dis: 4,
     pos: [0, 10, 9],
-    revolution: 0.3
+    rev: 0.3
   },
   Venus: {
     size: [0.85, 10, 10],
     dis: 7.5,
     pos: [0, 10, 12.75],
-    revolution: 0.6
+    rev: 0.6
   },
   Earth: {
     size: [1, 10, 10],
     dis: 10,
     pos: [0, 10, 15],
-    revolution: 1
+    rev: 1
   },
   Mars: {
-    size: [0.5, 10, 10],
+    size: [0.6, 10, 10],
     dis: 15,
     pos: [0, 10, 20],
-    revolution: 1.8,
+    rev: 1.8,
   },
   Jupiter: {
     size: [4, 32, 32],
     dis:  20,
     pos: [0, 10, 25],
-    revolution: 5
+    rev: 5
   },
   Saturn: {
     size: [3, 32, 32],
     dis:  25,
     pos: [0, 10, 30],
-    revolution: 10
+    rev: 10
   },
   Uranus: {
     size: [2, 32, 32],
     dis:  30,
     pos: [0, 10, 35],
-    revolution: 15
+    rev: 15
   },
   Neptune: {
     size: [1.8, 32, 32],
     dis:  35,
     pos: [0, 10, 40],
-    revolution: 0.45
+    rev: 0.5
   }
 }
 
@@ -73,7 +73,7 @@ export default class SolarSystem extends Component {
   }
 
   calcSpeed(planet) {
-    return planet.revolution ? 2 * P / 60 / 60 / planet.revolution : 1
+    return planet.rev ? 2 * P / 60 / 60 / planet.rev : 1
   }
 
   initPlanet(size = [1, 1, 32], color = 0x24bbdf) {
@@ -98,6 +98,28 @@ export default class SolarSystem extends Component {
     return planetsGroup
   }
 
+  initTrack(size, color = 0xfeffff) {
+    const ringGeometry = new THREE.RingGeometry(...size)
+    const ringMaterial = new THREE.MeshBasicMaterial({ color, opacity: 0.1 })
+    return new THREE.Mesh(ringGeometry, ringMaterial)
+  }
+
+  initTracks() {
+    const tracksGroup = new THREE.Group()
+    planetsName.map((name) => {
+      if (name === 'Sun') { return }
+      const outer = planets[name].pos[2]
+      const inner = outer - 0.05
+      const size = [outer, inner, 100]
+      const track = this.initTrack(size)
+      track.rotation.x = 0.5 * P
+      track.position.set(0, 10, 0)
+      track.name = name
+      tracksGroup.add(track)
+    })
+    return tracksGroup
+  }
+
   revolution(planetsGroup) {
     if (!Array.isArray(planetsGroup.children)) {
       return
@@ -111,11 +133,14 @@ export default class SolarSystem extends Component {
 
   componentDidMount() {
     const planetsGroup = this.initPlanets()
+    const tracksGroup = this.initTracks()
     this.scene.add(planetsGroup)
+    this.scene.add(tracksGroup)
     this.el.appendChild(this.renderer.domElement)
     this.renderer.setSize(this.el.clientWidth, this.el.clientHeight)
-    this.camera = new THREE.PerspectiveCamera(120, this.el.clientWidth / this.el.clientHeight, 1, 100)
-    this.camera.position.set(0, 30, 45)
+    // bigger fov will cause excessive perspective 75 => 45
+    this.camera = new THREE.PerspectiveCamera(45, this.el.clientWidth / this.el.clientHeight, 1, 500)
+    this.camera.position.set(0, 30, 70)
     this.camera.lookAt(this.scene.position)
     this.animate = () => {
       this.animation = window.requestAnimationFrame(this.animate)
