@@ -12,10 +12,10 @@ export default class HelloScene extends Component {
   componentDidMount() {
     let scene = new THREE.Scene()
     let renderer = new THREE.WebGLRenderer()
-    let camera = new THREE.PerspectiveCamera(75, window.innerHeight / (window.innerWidth - 200), 1, 100)
+    let camera = new THREE.PerspectiveCamera(75, this.el.clientHeight / this.el.clientWidth, 1, 100)
     let cube = this.initCube()
     // except the sidebar
-    renderer.setSize(window.innerWidth - 200, window.innerHeight)
+    renderer.setSize(this.el.clientWidth, this.el.clientHeight)
     // default color is just black
     renderer.setClearColor(new THREE.Color(0x000000))
     scene.add(cube)
@@ -32,7 +32,7 @@ export default class HelloScene extends Component {
   }
 
   render() {
-    return (<div ref={(el) => this.el = el}/>)
+    return (<div className="content-wrapper" ref={(el) => this.el = el}/>)
   }
 
   componentWillUnmount() {

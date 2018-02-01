@@ -38,19 +38,19 @@ const planets = {
     size: [4, 32, 32],
     dis:  20,
     pos: [0, 10, 25],
-    revolution: 10
+    revolution: 5
   },
   Saturn: {
     size: [3, 32, 32],
     dis:  25,
     pos: [0, 10, 30],
-    revolution: 15
+    revolution: 10
   },
   Uranus: {
     size: [2, 32, 32],
     dis:  30,
     pos: [0, 10, 35],
-    revolution: 20
+    revolution: 15
   },
   Neptune: {
     size: [1.8, 32, 32],
@@ -66,6 +66,10 @@ export default class SolarSystem extends Component {
     this.scene = new THREE.Scene()
     this.renderer = new THREE.WebGLRenderer()
     // this.renderer = new THREE.WebGLRenderer( parameters )
+  }
+
+  getAngle() {
+    return (Math.random() * 2 * P).toFixed(2) - 0
   }
 
   calcSpeed(planet) {
@@ -87,7 +91,7 @@ export default class SolarSystem extends Component {
       const speed = this.calcSpeed(planetObj)
       planet.speed = speed
       planet.dis = planetObj.pos[2]
-      planet.angle = 0
+      planet.angle = this.getAngle()
       planet.position.set(...planets[name].pos)
       planetsGroup.add(planet)
     })
@@ -107,7 +111,6 @@ export default class SolarSystem extends Component {
 
   componentDidMount() {
     const planetsGroup = this.initPlanets()
-    console.info(planetsGroup.children)
     this.scene.add(planetsGroup)
     this.el.appendChild(this.renderer.domElement)
     this.renderer.setSize(this.el.clientWidth, this.el.clientHeight)
