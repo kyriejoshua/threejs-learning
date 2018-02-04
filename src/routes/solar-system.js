@@ -1,63 +1,81 @@
 import React, { Component } from 'react'
 import * as THREE from 'three'
+import Font from './../assets/fonts/helvetiker_regular.typeface.json'
 
 const P = Math.PI
-const planetsName = ['Sun', 'Mercury', 'Venus', 'Earth', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune']
-const planets = {
-  Sun: {
+const planets = [
+  {
+    name: 'Sun',
     size: [5, 16, 16],
     dis: 0,
     pos: [0, 10, 0],
     color: 0xfef778
   },
-  Mercury: {
+  {
+    name: 'Mercury',
     size: [0.4, 10, 10],
     dis: 4,
     pos: [0, 10, 9],
     rev: 0.3
   },
-  Venus: {
+  {
+    name: 'Venus',
     size: [0.85, 10, 10],
     dis: 7.5,
     pos: [0, 10, 12.75],
     rev: 0.6
   },
-  Earth: {
+  {
+    name: 'Earth',
     size: [1, 10, 10],
     dis: 10,
     pos: [0, 10, 15],
     rev: 1
   },
-  Mars: {
+  {
+    name: 'Mars',
     size: [0.6, 10, 10],
     dis: 15,
     pos: [0, 10, 20],
     rev: 1.8,
   },
-  Jupiter: {
+  {
+    name: 'Jupiter',
     size: [4, 32, 32],
     dis:  20,
     pos: [0, 10, 25],
     rev: 5
   },
-  Saturn: {
+  {
+    name: 'Saturn',
     size: [3, 32, 32],
     dis:  25,
     pos: [0, 10, 30],
     rev: 10
   },
-  Uranus: {
+  {
+    name: 'Uranus',
     size: [2, 32, 32],
     dis:  30,
     pos: [0, 10, 35],
     rev: 15
   },
-  Neptune: {
+  {
+    name: 'Neptune',
     size: [1.8, 32, 32],
     dis:  35,
     pos: [0, 10, 40],
     rev: 0.5
   }
+]
+
+const fontStyle = {
+  size: 0.5,
+  height: 0,
+  curveSegments: 12,
+  bevelEnabled: false,
+  bevelThickness: 1,
+  bevelSize: 0.8
 }
 
 export default class SolarSystem extends Component {
@@ -65,6 +83,10 @@ export default class SolarSystem extends Component {
     super(props)
     this.scene = new THREE.Scene()
     this.renderer = new THREE.WebGLRenderer()
+    this.font = Object.assign(fontStyle, { font: this.loadText() })
+    this.planetsGroup = new THREE.Group()
+    this.textsGroup = new THREE.Group()
+    this.tracksGroup = new THREE.Group()
     // this.renderer = new THREE.WebGLRenderer( parameters )
   }
 
@@ -76,6 +98,26 @@ export default class SolarSystem extends Component {
     return planet.rev ? 2 * P / 60 / 60 / planet.rev : 1
   }
 
+  getGroupByName(name) {
+    return this[name]
+  }
+
+  loadText() {
+    const textloader = new THREE.FontLoader()
+    return new THREE.Font(Font)
+    // return new Promise((resolve) => {
+      // textloader.load('./assets/fonts/helvetiker_regular.typeface.json', (font) => {
+      //   resolve(font)
+      // })
+    // })
+  }
+
+  initText(content) {
+    const textGeometry = new THREE.TextGeometry(content, this.font)
+    const textMaterial = new THREE.MeshBasicMaterial({ color: 0xebebeb })
+    return new THREE.Mesh(textGeometry, textMaterial)
+  }
+
   initPlanet(size = [1, 1, 32], color = 0x24bbdf) {
     const sphereGeometry = new THREE.SphereGeometry(...size)
     const sphereMaterial = new THREE.MeshBasicMaterial({ color })
@@ -84,16 +126,23 @@ export default class SolarSystem extends Component {
   }
 
   initPlanets() {
-    const planetsGroup = new THREE.Group()
-    planetsName.map((name) => {
-      const planetObj = planets[name]
+    let planetsGroup = this.getGroupByName('planetsGroup')
+    let textsGroup = this.getGroupByName('textsGroup')
+    planets.map((planetObj) => {
       const planet = this.initPlanet(planetObj.size, planetObj.color)
       const speed = this.calcSpeed(planetObj)
-      planet.speed = speed
-      planet.dis = planetObj.pos[2]
-      planet.angle = this.getAngle()
-      planet.position.set(...planets[name].pos)
+      const text = this.initText(planetObj.name)
+      Object.assign(planet, {
+        name: planetObj.name,
+        size: planetObj.size,
+        dis: planetObj.pos[2],
+        angle: this.getAngle(),
+        speed
+      })
+      planet.position.set(...planetObj.pos)
+      text.position.set(...planetObj.pos)
       planetsGroup.add(planet)
+      textsGroup.add(text)
     })
     return planetsGroup
   }
@@ -105,10 +154,10 @@ export default class SolarSystem extends Component {
   }
 
   initTracks() {
-    const tracksGroup = new THREE.Group()
-    planetsName.map((name) => {
-      if (name === 'Sun') { return }
-      const outer = planets[name].pos[2]
+    let tracksGroup = this.getGroupByName('tracksGroup')
+    planets.map((planet) => {
+      if (planet.name === 'Sun') { return }
+      const outer = planet.pos[2]
       const inner = outer - 0.05
       const size = [outer, inner, 100]
       const track = this.initTrack(size)
@@ -120,13 +169,16 @@ export default class SolarSystem extends Component {
     return tracksGroup
   }
 
-  revolution(planetsGroup) {
+  revolution(planetsGroup, textsGroup) {
     if (!Array.isArray(planetsGroup.children)) {
       return
     }
-    planetsGroup.children.map((planet) => {
+    planetsGroup.children.map((planet, index) => {
       const { angle, speed, dis } = planet
+      const text = textsGroup.children[index]
+      const r = text && text.geometry && text.geometry.boundingSphere.radius || 0
       planet.position.set(Math.sin(angle) * dis, 10, Math.cos(angle) * dis)
+      text.position.set(Math.sin(angle) * dis - r, 10 + 0.5 + planet.size[0], Math.cos(angle) * dis + 0.5)
       planet.angle += planet.speed
     })
   }
@@ -136,6 +188,7 @@ export default class SolarSystem extends Component {
     const tracksGroup = this.initTracks()
     this.scene.add(planetsGroup)
     this.scene.add(tracksGroup)
+    this.scene.add(this.textsGroup)
     this.el.appendChild(this.renderer.domElement)
     this.renderer.setSize(this.el.clientWidth, this.el.clientHeight)
     // bigger fov will cause excessive perspective 75 => 45
@@ -145,7 +198,7 @@ export default class SolarSystem extends Component {
     this.animate = () => {
       this.animation = window.requestAnimationFrame(this.animate)
       this.renderer.render(this.scene, this.camera)
-      this.revolution(planetsGroup)
+      this.revolution(planetsGroup, this.textsGroup)
     }
 
     this.animate()
