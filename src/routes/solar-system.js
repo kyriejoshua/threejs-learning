@@ -91,7 +91,7 @@ export default class SolarSystem extends Component {
     super(props)
     this.scene = new THREE.Scene()
     this.renderer = new THREE.WebGLRenderer()
-    this.font = Object.assign(fontStyle, { font: this.loadText() })
+    this.font = Object.assign(fontStyle, { font: this.loadFont() })
     this.planetsGroup = new THREE.Group()
     this.textsGroup = new THREE.Group()
     this.tracksGroup = new THREE.Group()
@@ -110,9 +110,9 @@ export default class SolarSystem extends Component {
     return this[name]
   }
 
-  loadText() {
-    const textloader = new THREE.FontLoader()
+  loadFont() {
     return new THREE.Font(Font)
+    // const textloader = new THREE.FontLoader()
     // return new Promise((resolve) => {
       // textloader.load('./assets/fonts/helvetiker_regular.typeface.json', (font) => {
       //   resolve(font)
@@ -155,6 +155,12 @@ export default class SolarSystem extends Component {
     return planetsGroup
   }
 
+  handleTrackSize(planet) {
+    const outer = planet.pos[2]
+    const inner = outer - 0.05
+    return [outer, inner, 100]
+  }
+
   initTrack(size, color = 0xfeffff) {
     const ringGeometry = new THREE.RingGeometry(...size)
     const ringMaterial = new THREE.MeshBasicMaterial({ color, opacity: 0.1 })
@@ -165,9 +171,7 @@ export default class SolarSystem extends Component {
     let tracksGroup = this.getGroupByName('tracksGroup')
     planets.map((planet) => {
       if (planet.name === 'Sun') { return }
-      const outer = planet.pos[2]
-      const inner = outer - 0.05
-      const size = [outer, inner, 100]
+      const size = this.handleTrackSize(planet)
       const track = this.initTrack(size)
       track.rotation.x = 0.5 * P
       track.position.set(0, 10, 0)
