@@ -9,13 +9,14 @@ const planets = [
     size: [5, 16, 16],
     dis: 0,
     pos: [0, 10, 0],
-    color: 0xfef778
+    color: 0xFEF778
   },
   {
     name: 'Mercury',
     size: [0.4, 10, 10],
     dis: 4,
     pos: [0, 10, 9],
+    color: 0xFA9E05,
     rev: 0.3
   },
   {
@@ -23,6 +24,7 @@ const planets = [
     size: [0.85, 10, 10],
     dis: 7.5,
     pos: [0, 10, 12.75],
+    color: 0xFFDD00,
     rev: 0.6
   },
   {
@@ -30,6 +32,7 @@ const planets = [
     size: [1, 10, 10],
     dis: 10,
     pos: [0, 10, 15],
+    color: 0x00B7C2,
     rev: 1
   },
   {
@@ -37,6 +40,7 @@ const planets = [
     size: [0.6, 10, 10],
     dis: 15,
     pos: [0, 10, 20],
+    color: 0xBC5148,
     rev: 1.8,
   },
   {
@@ -44,6 +48,7 @@ const planets = [
     size: [4, 32, 32],
     dis:  20,
     pos: [0, 10, 25],
+    color: 0xF0D879,
     rev: 5
   },
   {
@@ -51,6 +56,7 @@ const planets = [
     size: [3, 32, 32],
     dis:  25,
     pos: [0, 10, 30],
+    color: 0xF4D143,
     rev: 10
   },
   {
@@ -58,6 +64,7 @@ const planets = [
     size: [2, 32, 32],
     dis:  30,
     pos: [0, 10, 35],
+    color: 0x48BA95,
     rev: 15
   },
   {
@@ -65,6 +72,7 @@ const planets = [
     size: [1.8, 32, 32],
     dis:  35,
     pos: [0, 10, 40],
+    color: 0xEAC100,
     rev: 0.5
   }
 ]
@@ -118,10 +126,10 @@ export default class SolarSystem extends Component {
     return new THREE.Mesh(textGeometry, textMaterial)
   }
 
-  initPlanet(size = [1, 1, 32], color = 0x24bbdf) {
+  initPlanet(size = [1, 1, 32], color = 0x24bbdf, type) {
     const sphereGeometry = new THREE.SphereGeometry(...size)
-    const sphereMaterial = new THREE.MeshBasicMaterial({ color })
-    // const sphereMaterial = THREE.MeshBasicMaterial( color, map, shading, wireframe )
+    const materialType = type === 'Sun' ? 'MeshPhongMaterial' : 'MeshLambertMaterial'
+    const sphereMaterial = new THREE[materialType]({ color })
     return new THREE.Mesh(sphereGeometry, sphereMaterial)
   }
 
@@ -129,7 +137,7 @@ export default class SolarSystem extends Component {
     let planetsGroup = this.getGroupByName('planetsGroup')
     let textsGroup = this.getGroupByName('textsGroup')
     planets.map((planetObj) => {
-      const planet = this.initPlanet(planetObj.size, planetObj.color)
+      const planet = this.initPlanet(planetObj.size, planetObj.color, planetObj.name)
       const speed = this.calcSpeed(planetObj)
       const text = this.initText(planetObj.name)
       Object.assign(planet, {
@@ -169,6 +177,17 @@ export default class SolarSystem extends Component {
     return tracksGroup
   }
 
+  initPointLight() {
+    const Sun = planets[0]
+    let pointLight = new THREE.PointLight(Sun.color, 1, 100)
+    pointLight.position.set(...Sun.pos)
+    return pointLight
+  }
+
+  initAmbientLight(color = 0xFEFFFF, intensity = 0.7) {
+    return new THREE.AmbientLight(color, intensity)
+  }
+
   revolution(planetsGroup, textsGroup) {
     if (!Array.isArray(planetsGroup.children)) {
       return
@@ -186,8 +205,12 @@ export default class SolarSystem extends Component {
   componentDidMount() {
     const planetsGroup = this.initPlanets()
     const tracksGroup = this.initTracks()
+    const pointLight = this.initPointLight()
+    const ambientLight = this.initAmbientLight()
     this.scene.add(planetsGroup)
     this.scene.add(tracksGroup)
+    this.scene.add(pointLight)
+    this.scene.add(ambientLight)
     this.scene.add(this.textsGroup)
     this.el.appendChild(this.renderer.domElement)
     this.renderer.setSize(this.el.clientWidth, this.el.clientHeight)
