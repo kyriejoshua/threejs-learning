@@ -11,17 +11,19 @@ import NeptunePic from './../assets/neptune.jpeg'
 import UranusPic from './../assets/uranus.jpeg'
 import VenusPic from './../assets/venus.jpeg'
 import SaturnPic from './../assets/saturn.jpeg'
+import StarPic from './../assets/star.png'
 
-const TexureLoader = new THREE.TextureLoader()
-const sunPic = TexureLoader.load(SunPic)
-const earthPic = TexureLoader.load(EarthPic)
-const jupiterPic = TexureLoader.load(JupiterPic)
-const marsPic = TexureLoader.load(MarsPic)
-const mercuryPic = TexureLoader.load(MercuryPic)
-const neptunePic = TexureLoader.load(NeptunePic)
-const uranusPic = TexureLoader.load(UranusPic)
-const venusPic = TexureLoader.load(VenusPic)
-const saturnPic = TexureLoader.load(SaturnPic)
+const TextureLoader = new THREE.TextureLoader()
+const sunPic = TextureLoader.load(SunPic)
+const earthPic = TextureLoader.load(EarthPic)
+const jupiterPic = TextureLoader.load(JupiterPic)
+const marsPic = TextureLoader.load(MarsPic)
+const mercuryPic = TextureLoader.load(MercuryPic)
+const neptunePic = TextureLoader.load(NeptunePic)
+const uranusPic = TextureLoader.load(UranusPic)
+const venusPic = TextureLoader.load(VenusPic)
+const saturnPic = TextureLoader.load(SaturnPic)
+const starPic = TextureLoader.load(StarPic)
 
 const P = Math.PI
 const planets = [
@@ -159,6 +161,24 @@ export default class SolarSystem extends Component {
     return new THREE.Mesh(textGeometry, textMaterial)
   }
 
+  initStars() {
+    const textureStar = TextureLoader.load(StarPic)
+    let starsGeometry = new THREE.Geometry()
+    for ( let i = 0; i < 250; i++ ) {
+      let star = new THREE.Vector3()
+      star.x = THREE.Math.randFloatSpread(100)
+      star.y = THREE.Math.randFloatSpread(100)
+      star.z = THREE.Math.randFloatSpread(100)
+      starsGeometry.vertices.push(star)
+    }
+    const starsMaterial = new THREE.PointsMaterial({ color: 0xcfee90, map: textureStar, size: 1,
+      transparent: true, opacity: 1, blending: THREE.AdditiveBlending, depthTest: false })
+    const starField = new THREE.Points(starsGeometry, starsMaterial)
+    starField.clockwise = true
+    starField.position.set(0, 10, 0)
+    this.scene.add(starField)
+  }
+
   initPlanet(size = [1, 1, 32], color = 0x24bbdf, map, type) {
     const sphereGeometry = new THREE.SphereGeometry(...size)
     const isSun = type === 'Sun'
@@ -229,7 +249,7 @@ export default class SolarSystem extends Component {
     return new THREE.AmbientLight(color, intensity)
   }
 
-  revolution(planetsGroup, textsGroup) {
+  revolution(planetsGroup, textsGroup, scene) {
     if (!Array.isArray(planetsGroup.children)) {
       return
     }
@@ -241,6 +261,12 @@ export default class SolarSystem extends Component {
       planet.rotation.y += 0.002
       text.position.set(Math.sin(angle) * dis - r, 10 + 0.5 + planet.size[0], Math.cos(angle) * dis + 0.5)
       planet.angle += planet.speed
+    })
+    scene && Array.isArray(scene.children) && scene.children.map((obj, i) => {
+      if (obj instanceof THREE.Points) {
+        const time = Date.now() * 0.00001
+        obj.rotation.y = time * ( obj.clockwise ? i + 0.1 : -( i + 0.1 ) )
+      }
     })
   }
 
@@ -285,11 +311,13 @@ export default class SolarSystem extends Component {
     const tracksGroup = this.initTracks()
     const pointLight = this.initPointLight()
     const ambientLight = this.initAmbientLight()
+    const starField = this.initStars()
     this.scene.add(planetsGroup)
     this.scene.add(tracksGroup)
     this.scene.add(pointLight)
     this.scene.add(ambientLight)
     this.scene.add(this.textsGroup)
+    this.scene.add(starField)
     this.el.appendChild(this.renderer.domElement)
     this.renderer.setSize(this.el.clientWidth, this.el.clientHeight)
     // bigger fov will cause excessive perspective 75 => 45
@@ -299,7 +327,7 @@ export default class SolarSystem extends Component {
     this.animate = () => {
       this.animation = window.requestAnimationFrame(this.animate)
       this.renderer.render(this.scene, this.camera)
-      this.revolution(planetsGroup, this.textsGroup)
+      this.revolution(planetsGroup, this.textsGroup, this.scene)
     }
 
     this.animate()
