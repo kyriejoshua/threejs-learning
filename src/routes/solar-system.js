@@ -2,6 +2,26 @@ import React, { Component } from 'react'
 import * as THREE from 'three'
 import $ from 'jquery'
 import Font from './../assets/fonts/helvetiker_regular.typeface.json'
+import SunPic from './../assets/sun.jpeg'
+import EarthPic from './../assets/earth.jpeg'
+import JupiterPic from './../assets/jupiter.jpeg'
+import MarsPic from './../assets/mars.jpeg'
+import MercuryPic from './../assets/mercury.jpeg'
+import NeptunePic from './../assets/neptune.jpeg'
+import UranusPic from './../assets/uranus.jpeg'
+import VenusPic from './../assets/venus.jpeg'
+import SaturnPic from './../assets/saturn.jpeg'
+
+const TexureLoader = new THREE.TextureLoader()
+const sunPic = TexureLoader.load(SunPic)
+const earthPic = TexureLoader.load(EarthPic)
+const jupiterPic = TexureLoader.load(JupiterPic)
+const marsPic = TexureLoader.load(MarsPic)
+const mercuryPic = TexureLoader.load(MercuryPic)
+const neptunePic = TexureLoader.load(NeptunePic)
+const uranusPic = TexureLoader.load(UranusPic)
+const venusPic = TexureLoader.load(VenusPic)
+const saturnPic = TexureLoader.load(SaturnPic)
 
 const P = Math.PI
 const planets = [
@@ -10,38 +30,43 @@ const planets = [
     size: [5, 16, 16],
     dis: 0,
     pos: [0, 10, 0],
-    color: 0xFEF778
+    color: 0xFFFFFF,
+    map: sunPic
   },
   {
     name: 'Mercury',
     size: [0.4, 10, 10],
     dis: 4,
     pos: [0, 10, 9],
-    color: 0xFA9E05,
-    rev: 0.3
+    color: 0xFFFFFF,
+    map: mercuryPic,
+    rev: 0.3,
   },
   {
     name: 'Venus',
     size: [0.85, 10, 10],
     dis: 7.5,
     pos: [0, 10, 12.75],
-    color: 0xFFDD00,
-    rev: 0.6
+    color: 0xFFFFFF,
+    map: venusPic,
+    rev: 0.6,
   },
   {
     name: 'Earth',
     size: [1, 10, 10],
     dis: 10,
     pos: [0, 10, 15],
-    color: 0x00B7C2,
-    rev: 1
+    color: 0xFFFFFF,
+    map: earthPic,
+    rev: 1,
   },
   {
     name: 'Mars',
     size: [0.6, 10, 10],
     dis: 15,
     pos: [0, 10, 20],
-    color: 0xBC5148,
+    color: 0xFFFFFF,
+    map: marsPic,
     rev: 1.8,
   },
   {
@@ -49,7 +74,8 @@ const planets = [
     size: [4, 32, 32],
     dis:  20,
     pos: [0, 10, 25],
-    color: 0xF0D879,
+    color: 0xFFFFFF,
+    map: jupiterPic,
     rev: 5
   },
   {
@@ -57,7 +83,8 @@ const planets = [
     size: [3, 32, 32],
     dis:  25,
     pos: [0, 10, 30],
-    color: 0xF4D143,
+    color: 0xFFFFFF,
+    map: saturnPic,
     rev: 10
   },
   {
@@ -65,7 +92,8 @@ const planets = [
     size: [2, 32, 32],
     dis:  30,
     pos: [0, 10, 35],
-    color: 0x48BA95,
+    color: 0xFFFFFF,
+    map: uranusPic,
     rev: 15
   },
   {
@@ -73,7 +101,8 @@ const planets = [
     size: [1.8, 32, 32],
     dis:  35,
     pos: [0, 10, 40],
-    color: 0xEAC100,
+    color: 0xFFFFFF,
+    map: neptunePic,
     rev: 0.5
   }
 ]
@@ -130,10 +159,11 @@ export default class SolarSystem extends Component {
     return new THREE.Mesh(textGeometry, textMaterial)
   }
 
-  initPlanet(size = [1, 1, 32], color = 0x24bbdf, type) {
+  initPlanet(size = [1, 1, 32], color = 0x24bbdf, map, type) {
     const sphereGeometry = new THREE.SphereGeometry(...size)
-    const materialType = type === 'Sun' ? 'MeshPhongMaterial' : 'MeshLambertMaterial'
-    const sphereMaterial = new THREE[materialType]({ color })
+    const isSun = type === 'Sun'
+    const materialType = isSun ? 'MeshPhongMaterial' : 'MeshLambertMaterial'
+    const sphereMaterial = isSun ? new THREE[materialType]({ color, map, emissive: 0x9B611F,  }) : new THREE[materialType]({ color, map })
     return new THREE.Mesh(sphereGeometry, sphereMaterial)
   }
 
@@ -142,7 +172,7 @@ export default class SolarSystem extends Component {
     let textsGroup = this.getGroupByName('textsGroup')
     textsGroup.name = 'texts'
     planets.map((planetObj) => {
-      const planet = this.initPlanet(planetObj.size, planetObj.color, planetObj.name)
+      const planet = this.initPlanet(planetObj.size, planetObj.color, planetObj.map, planetObj.name)
       const speed = this.calcSpeed(planetObj.rev)
       const text = this.initText(planetObj.name)
       Object.assign(planet, {
@@ -164,11 +194,11 @@ export default class SolarSystem extends Component {
 
   handleTrackSize(planet) {
     const outer = planet.pos[2]
-    const inner = outer - 0.05
+    const inner = outer - 0.1
     return [outer, inner, 100]
   }
 
-  initTrack(size, color = 0xfeffff) {
+  initTrack(size, color = 0x453830) {
     const ringGeometry = new THREE.RingGeometry(...size)
     const ringMaterial = new THREE.MeshBasicMaterial({ color, opacity: 0.1 })
     return new THREE.Mesh(ringGeometry, ringMaterial)
@@ -190,12 +220,12 @@ export default class SolarSystem extends Component {
 
   initPointLight() {
     const Sun = planets[0]
-    let pointLight = new THREE.PointLight(Sun.color, 0.7, 100)
+    let pointLight = new THREE.PointLight(Sun.color, 1, 100)
     pointLight.position.set(...Sun.pos)
     return pointLight
   }
 
-  initAmbientLight(color = 0xFEFFFF, intensity = 0.6) {
+  initAmbientLight(color = 0xFEFFFF, intensity = 0.7) {
     return new THREE.AmbientLight(color, intensity)
   }
 
@@ -208,6 +238,7 @@ export default class SolarSystem extends Component {
       const text = textsGroup.children[index]
       const r = text && text.geometry && text.geometry.boundingSphere && text.geometry.boundingSphere.radius || 0
       planet.position.set(Math.sin(angle) * dis, 10, Math.cos(angle) * dis)
+      planet.rotation.y += 0.002
       text.position.set(Math.sin(angle) * dis - r, 10 + 0.5 + planet.size[0], Math.cos(angle) * dis + 0.5)
       planet.angle += planet.speed
     })
