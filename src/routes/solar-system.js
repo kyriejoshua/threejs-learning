@@ -1,5 +1,6 @@
 import React, { Component } from 'react'
 import * as THREE from 'three'
+import $ from 'jquery'
 import Font from './../assets/fonts/helvetiker_regular.typeface.json'
 
 const P = Math.PI
@@ -78,7 +79,7 @@ const planets = [
 ]
 
 const fontStyle = {
-  size: 0.5,
+  size: 0.6,
   height: 0,
   curveSegments: 12,
   bevelEnabled: false,
@@ -91,10 +92,13 @@ export default class SolarSystem extends Component {
     super(props)
     this.scene = new THREE.Scene()
     this.renderer = new THREE.WebGLRenderer()
+    this.mouse = new THREE.Vector2()
+    this.raycaster = new THREE.Raycaster()
     this.font = Object.assign(fontStyle, { font: this.loadFont() })
     this.planetsGroup = new THREE.Group()
     this.textsGroup = new THREE.Group()
     this.tracksGroup = new THREE.Group()
+    this.showTitle = false
     // this.renderer = new THREE.WebGLRenderer( parameters )
   }
 
@@ -102,8 +106,8 @@ export default class SolarSystem extends Component {
     return (Math.random() * 2 * P).toFixed(2) - 0
   }
 
-  calcSpeed(planet) {
-    return planet.rev ? 2 * P / 60 / 60 / planet.rev : 1
+  calcSpeed(rev) {
+    return rev ? 2 * P / 60 / 60 / rev : 1
   }
 
   getGroupByName(name) {
@@ -136,9 +140,10 @@ export default class SolarSystem extends Component {
   initPlanets() {
     let planetsGroup = this.getGroupByName('planetsGroup')
     let textsGroup = this.getGroupByName('textsGroup')
+    textsGroup.name = 'texts'
     planets.map((planetObj) => {
       const planet = this.initPlanet(planetObj.size, planetObj.color, planetObj.name)
-      const speed = this.calcSpeed(planetObj)
+      const speed = this.calcSpeed(planetObj.rev)
       const text = this.initText(planetObj.name)
       Object.assign(planet, {
         name: planetObj.name,
@@ -149,6 +154,8 @@ export default class SolarSystem extends Component {
       })
       planet.position.set(...planetObj.pos)
       text.position.set(...planetObj.pos)
+      text.visible = false
+      text.name = planetObj.name
       planetsGroup.add(planet)
       textsGroup.add(text)
     })
@@ -183,12 +190,12 @@ export default class SolarSystem extends Component {
 
   initPointLight() {
     const Sun = planets[0]
-    let pointLight = new THREE.PointLight(Sun.color, 1, 100)
+    let pointLight = new THREE.PointLight(Sun.color, 0.7, 100)
     pointLight.position.set(...Sun.pos)
     return pointLight
   }
 
-  initAmbientLight(color = 0xFEFFFF, intensity = 0.7) {
+  initAmbientLight(color = 0xFEFFFF, intensity = 0.6) {
     return new THREE.AmbientLight(color, intensity)
   }
 
@@ -199,14 +206,50 @@ export default class SolarSystem extends Component {
     planetsGroup.children.map((planet, index) => {
       const { angle, speed, dis } = planet
       const text = textsGroup.children[index]
-      const r = text && text.geometry && text.geometry.boundingSphere.radius || 0
+      const r = text && text.geometry && text.geometry.boundingSphere && text.geometry.boundingSphere.radius || 0
       planet.position.set(Math.sin(angle) * dis, 10, Math.cos(angle) * dis)
       text.position.set(Math.sin(angle) * dis - r, 10 + 0.5 + planet.size[0], Math.cos(angle) * dis + 0.5)
       planet.angle += planet.speed
     })
   }
 
+  onDomMouseMove(event) {
+    event.stopPropagation()
+    event.preventDefault()
+    this.mouse.x = (event.clientX - this.$el.offset().left - this.$el.width() / 2) / (this.$el.width() / 2)
+    this.mouse.y = - (event.clientY - this.$el.height() / 2) / (this.$el.height() / 2)
+    this.handleRaycaster()
+  }
+
+  handleRaycaster() {
+    this.raycaster.setFromCamera(this.mouse, this.camera)
+    const intersects = this.raycaster.intersectObjects(this.scene.children, true)
+    if (intersects.length > 0 && intersects[0].object instanceof THREE.Mesh && intersects[0].object.name) {
+      const name = intersects[0].object.name
+      this.handleText(name, true)
+    } else {
+      this.showTitle && this.handleText(null, false)
+    }
+  }
+
+  /**
+   * [handleText description]
+   * @param  {String} name [description]
+   * @param  {Boolean} bol  [description]
+   */
+  handleText(name, bol) {
+    this.scene.children.map((obj) => {
+      if (obj.name !== 'texts') { return }
+      obj.children.map((text) => {
+        text.visible = name === text.name
+      })
+      this.showTitle = bol
+    })
+  }
+
   componentDidMount() {
+    this.$el = $(this.el)
+    this.el.addEventListener('mousemove', this.onDomMouseMove.bind(this))
     const planetsGroup = this.initPlanets()
     const tracksGroup = this.initTracks()
     const pointLight = this.initPointLight()
