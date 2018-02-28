@@ -87,13 +87,14 @@ const planets = [
     pos: [0, 10, 30],
     color: 0xFFFFFF,
     map: saturnPic,
+    hasRing: true,
     rev: 10
   },
   {
     name: 'Uranus',
     size: [2, 32, 32],
     dis:  30,
-    pos: [0, 10, 35],
+    pos: [0, 10, 36],
     color: 0xFFFFFF,
     map: uranusPic,
     rev: 15
@@ -102,7 +103,7 @@ const planets = [
     name: 'Neptune',
     size: [1.8, 32, 32],
     dis:  35,
-    pos: [0, 10, 40],
+    pos: [0, 10, 45],
     color: 0xFFFFFF,
     map: neptunePic,
     rev: 0.5
@@ -192,48 +193,69 @@ export default class SolarSystem extends Component {
     let textsGroup = this.getGroupByName('textsGroup')
     textsGroup.name = 'texts'
     planets.map((planetObj) => {
-      const planet = this.initPlanet(planetObj.size, planetObj.color, planetObj.map, planetObj.name)
-      const speed = this.calcSpeed(planetObj.rev)
-      const text = this.initText(planetObj.name)
+      const { pos, size, color, map, name, rev, hasRing = false } = planetObj
+      const planet = this.initPlanet(size, color, map, name)
+      const speed = this.calcSpeed(rev)
+      const text = this.initText(name)
       Object.assign(planet, {
-        name: planetObj.name,
-        size: planetObj.size,
-        dis: planetObj.pos[2],
+        name,
+        size,
+        dis: pos[2],
         angle: this.getAngle(),
         speed
       })
-      planet.position.set(...planetObj.pos)
-      text.position.set(...planetObj.pos)
+      planet.position.set(...pos)
+      text.position.set(...pos)
       text.visible = false
-      text.name = planetObj.name
+      text.name = name
       planetsGroup.add(planet)
       textsGroup.add(text)
     })
     return planetsGroup
   }
 
-  handleTrackSize(planet) {
-    const outer = planet.pos[2]
-    const inner = outer - 0.1
+  handleTrackSize(outer, size = 0.15) {
+    const inner = outer - size
     return [outer, inner, 100]
   }
 
-  initTrack(size, color = 0x453830) {
+  createTrackMesh(size, color = 0x453830, map) {
     const ringGeometry = new THREE.RingGeometry(...size)
-    const ringMaterial = new THREE.MeshBasicMaterial({ color, opacity: 0.1 })
+    const ringMaterial = new THREE.MeshLambertMaterial({ color, map })
     return new THREE.Mesh(ringGeometry, ringMaterial)
+  }
+
+  createTrack(outer, size, color, map) {
+    return this.createTrackMesh(this.handleTrackSize(outer, size), color, map)
+  }
+
+  initTrack(planet, isRing) {
+    const { size, pos, name, map } = planet
+    const outer = isRing ? size[0] + 2: pos[2]
+    const position = isRing ? pos : [0, 10, 0]
+    const trackSize = isRing ? 1 : 0.15
+    const trackColor = isRing ? 0xFFFFFF : 0x453830
+    // const trackColor = isRing ? 0xAC8B61 : 0x453830
+    const trackMap = isRing ? map : null
+    const track = this.createTrack(outer, trackSize, trackColor, trackMap)
+    track.rotation.x = isRing ? 0.6 * P : 0.5 * P
+    track.rotation.y = isRing ? 0.1 * P : 0
+    track.rotation.z = isRing ? 0.2 * P : 0
+    track.position.set(...position)
+    track.name = isRing ? name : ''
+    return track
   }
 
   initTracks() {
     let tracksGroup = this.getGroupByName('tracksGroup')
     planets.map((planet) => {
       if (planet.name === 'Sun') { return }
-      const size = this.handleTrackSize(planet)
-      const track = this.initTrack(size)
-      track.rotation.x = 0.5 * P
-      track.position.set(0, 10, 0)
-      track.name = name
+      const track = this.initTrack(planet)
       tracksGroup.add(track)
+      if (planet.hasRing) {
+        const ring = this.initTrack(planet, true)
+        tracksGroup.add(ring)
+      }
     })
     return tracksGroup
   }
@@ -249,7 +271,7 @@ export default class SolarSystem extends Component {
     return new THREE.AmbientLight(color, intensity)
   }
 
-  revolution(planetsGroup, textsGroup, scene) {
+  revolution(planetsGroup, textsGroup, tracksGroup, scene) {
     if (!Array.isArray(planetsGroup.children)) {
       return
     }
@@ -257,9 +279,16 @@ export default class SolarSystem extends Component {
       const { angle, speed, dis } = planet
       const text = textsGroup.children[index]
       const r = text && text.geometry && text.geometry.boundingSphere && text.geometry.boundingSphere.radius || 0
-      planet.position.set(Math.sin(angle) * dis, 10, Math.cos(angle) * dis)
+      const planetPos = [Math.sin(angle) * dis, 10, Math.cos(angle) * dis]
+      const textPos = [Math.sin(angle) * dis - r, 10 + 0.5 + planet.size[0], Math.cos(angle) * dis + 0.5]
+      planet.position.set(...planetPos)
+      if (planet.name === 'Saturn') {
+        tracksGroup.children.map((track) => {
+          track.name === 'Saturn' && track.position.set(...planetPos)
+        })
+      }
       planet.rotation.y += 0.002
-      text.position.set(Math.sin(angle) * dis - r, 10 + 0.5 + planet.size[0], Math.cos(angle) * dis + 0.5)
+      text.position.set(...textPos)
       planet.angle += planet.speed
     })
     scene && Array.isArray(scene.children) && scene.children.map((obj, i) => {
@@ -327,7 +356,7 @@ export default class SolarSystem extends Component {
     this.animate = () => {
       this.animation = window.requestAnimationFrame(this.animate)
       this.renderer.render(this.scene, this.camera)
-      this.revolution(planetsGroup, this.textsGroup, this.scene)
+      this.revolution(planetsGroup, this.textsGroup, tracksGroup, this.scene)
     }
 
     this.animate()
