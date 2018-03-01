@@ -63,6 +63,14 @@ const planets = [
     rev: 1,
   },
   {
+    name: 'Moon',
+    size: [0.4, 10, 10],
+    dis: 1,
+    pos: [0, 10, 17],
+    color: 0xC0C0C0,
+    rev: 0.2,
+  },
+  {
     name: 'Mars',
     size: [0.6, 10, 10],
     dis: 15,
@@ -249,7 +257,7 @@ export default class SolarSystem extends Component {
   initTracks() {
     let tracksGroup = this.getGroupByName('tracksGroup')
     planets.map((planet) => {
-      if (planet.name === 'Sun') { return }
+      if (planet.name === 'Sun' || planet.name === 'Moon') { return }
       const track = this.initTrack(planet)
       tracksGroup.add(track)
       if (planet.hasRing) {
@@ -276,19 +284,27 @@ export default class SolarSystem extends Component {
       return
     }
     planetsGroup.children.map((planet, index) => {
-      const { angle, speed, dis } = planet
+      const { angle, speed, dis, name } = planet
       const text = textsGroup.children[index]
       const r = text && text.geometry && text.geometry.boundingSphere && text.geometry.boundingSphere.radius || 0
       const planetPos = [Math.sin(angle) * dis, 10, Math.cos(angle) * dis]
       const textPos = [Math.sin(angle) * dis - r, 10 + 0.5 + planet.size[0], Math.cos(angle) * dis + 0.5]
       planet.position.set(...planetPos)
-      if (planet.name === 'Saturn') {
+      text.position.set(...textPos)
+      // save for moon
+      if (name === 'Earth') { planetsGroup.earthPos = planetPos }
+      if (name === 'Moon') {
+        const pos = [planetsGroup.earthPos[0] + Math.sin(angle) * 2, 10, planetsGroup.earthPos[2] + Math.cos(angle) * 2]
+        planet.position.set(...pos)
+        const textPos = [pos[0] - r, 10 + 0.5 + planet.size[0], pos[2] + 0.5]
+        text.position.set(...textPos)
+      }
+      if (name === 'Saturn') {
         tracksGroup.children.map((track) => {
           track.name === 'Saturn' && track.position.set(...planetPos)
         })
       }
       planet.rotation.y += 0.002
-      text.position.set(...textPos)
       planet.angle += planet.speed
     })
     scene && Array.isArray(scene.children) && scene.children.map((obj, i) => {
