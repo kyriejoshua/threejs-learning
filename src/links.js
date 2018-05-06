@@ -6,4 +6,6 @@ export default [{
   id: 'bubbles', desc: 'rotating bubbles'
 }, {
   id: 'solar-system', desc: 'solar system'
+}, {
+  id: 'starwar', desc: 'starwar opening'
 }]

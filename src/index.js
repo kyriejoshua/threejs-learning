@@ -19,6 +19,7 @@ ReactDOM.render(
         <Route path="/creating-a-scene" component={routes.HelloScene}/>
         <Route path="/bubbles" component={routes.Bubbles}/>
         <Route path='/solar-system' component={routes.SolarSystem}/>
+        <Route path='/starwar' component={routes.Starwar}/>
       </div>
     </div>
   </Router>
