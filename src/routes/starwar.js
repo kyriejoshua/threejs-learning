@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import * as THREE from 'three'
-import EarthPic from './../assets/amcharts.png'
+import EarthPic from './../assets/amcharts.jpg'
 // import EarthPic from './../assets/satelite.jpg'
 import StarPic from './../assets/star.png'
 import Font from './../assets/fonts/helvetiker_regular.typeface.json'
